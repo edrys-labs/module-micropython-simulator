@@ -1,0 +1,8 @@
+Copied from https://python-simulator.usermbit.org/v/0.1/ (source: https://github.com/microbit-foundation/micropython-microbit-v2-simulator) on 2026-10-12
+by scripts/update-simulators.sh, which patched build/simulator.js.
+sha256 of the files as downloaded, before the patch:
+
+22d54e95e67c72adec888554c2ccf58895246cdb784336693516134778246f53  simulator.html
+600b489a4879452617229136036453ca17abe5822c31cac364c8a7219bcd25fd  build/firmware.js
+d6ee93477ce4344ad430c3fe3c0c10180c5e289fcd64fbd2d85dd12858a209b5  build/simulator.js
+0a210015c47c76c95416230294fe9369b5440026b16512fa937f6fc79f042af4  build/firmware.wasm

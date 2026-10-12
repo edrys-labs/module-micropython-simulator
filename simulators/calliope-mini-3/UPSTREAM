@@ -1,0 +1,8 @@
+Copied from https://simulator.python.calliope.cc/ (source: https://github.com/calliope-edu/micropython-simulator) on 2026-10-12
+by scripts/update-simulators.sh, which patched build/simulator.js.
+sha256 of the files as downloaded, before the patch:
+
+50b7f999d83e38b688e179117e3a778f9d7f84728dc8b48c44760a99bf293fef  simulator.html
+1e1a6bef9f1cd80468e768efe9a732279e3f6839cc161d3d62df187768005801  build/firmware.js
+354c716c115fca95a94d3d73f6881fafa01e9e0e0929ea6c53983b53512a5d41  build/simulator.js
+fe623db7cb8b2e4fa091186d37efc40e6c8716e301e62316b15b8adffc7b5b4d  build/firmware.wasm

@@ -1,16 +1,17 @@
 // The simulators are MicroPython compiled to WebAssembly, made to be embedded as an iframe.
-// Both speak the same message API (see README). ratio is height / width of the
-// board drawing (the viewBox of the simulator's SVG), to size the frame to it.
+// Both speak the same message API (see README). They are copies of the hosted ones, patched
+// to start without their play button (scripts/update-simulators.sh). ratio is height / width
+// of the board drawing (the viewBox of the simulator's SVG), to size the frame to it.
 const BOARDS = {
     "calliope-mini-3": {
         name: "Calliope mini 3",
-        url: "https://simulator.python.calliope.cc/simulator.html",
+        path: "simulators/calliope-mini-3/simulator.html",
         import: "from calliopemini import *",
         ratio: 219.4 / 243.7,
     },
     "microbit-v2": {
         name: "BBC micro:bit v2",
-        url: "https://python-simulator.usermbit.org/v/0.1/simulator.html",
+        path: "simulators/microbit-v2/simulator.html",
         import: "from microbit import *",
         ratio: 155.77 / 191.27,
     },
@@ -41,18 +42,15 @@ function programKey() {
 const STOP_SUBJECT = "micropython-stop"
 
 let frame = null
-// The simulator plays sound, and browsers allow audio only after a click. So the first
-// program can only start from the play button on the board: its click sends request_flash.
-// After that, programs start right away.
-let unlocked = false
-// the last program, as { "main.py": "...", ... }; flashed again when play is clicked
+// whether the simulator has loaded (sent ready); a program sent before waits for it
+let simulatorReady = false
+// the last program, as { "main.py": "...", ... }; flashed again when the board's play
+// button is clicked after Stop
 let program = null
 let running = false
-let state = "loading"
 
 // kind is the badge colour: on, off or wait
 function setStatus(name, kind) {
-    state = name
     const badge = document.getElementById("status")
     badge.textContent = name
     badge.className = "badge " + kind
@@ -64,8 +62,11 @@ function disabled(bool) {
     document.getElementById("stdin").disabled = bool
 }
 
+// The simulator is served next to the module, so it has the module's origin. It keeps that
+// origin in its sandbox (allow-same-origin): with an opaque one, its fetch of firmware.wasm
+// would be cross-origin and fail on servers without CORS headers (like VS Code's Live Server).
 function post(message) {
-    frame?.contentWindow.postMessage(message, new URL(board().url).origin)
+    frame?.contentWindow.postMessage(message, location.origin)
 }
 
 // An upload is Python source, or a project as module-editor's multi-file
@@ -105,12 +106,8 @@ function run(body) {
     }
 
     program = files
-    if (unlocked) {
+    if (simulatorReady) {
         flash()
-    } else {
-        clearTerminal()
-        notice("Program received: click ▶ on the board to start it (browsers allow sound only after a click).")
-        setStatus("press play", "wait")
     }
 }
 
@@ -136,11 +133,9 @@ function stop() {
         disabled(true)
         notice("\nexecution stopped")
         setStatus("stopped", "wait")
-    } else if (state === "press play") {
-        // a stop before play drops the waiting program
+    } else if (!simulatorReady) {
+        // a stop while the board loads drops the program waiting for it
         program = null
-        notice("\nexecution stopped")
-        setStatus("stopped", "wait")
     }
 }
 
@@ -168,20 +163,22 @@ function send() {
 }
 
 function onSimulator(event) {
-    if (!frame || event.source !== frame.contentWindow || event.origin !== new URL(board().url).origin) {
+    if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) {
         return
     }
     const data = event.data || {}
 
     switch (data.kind) {
         case "ready":
-            if (state === "loading") {
+            simulatorReady = true
+            if (program) {
+                flash()
+            } else {
                 setStatus("idle", "wait")
             }
             break
         case "request_flash":
-            // the play button was clicked: from now on programs start without it
-            unlocked = true
+            // the board's play button, shown before the first program and after Stop
             flash()
             break
         case "serial_output":
@@ -364,7 +361,7 @@ Edrys.onReady(() => {
     frame = document.createElement("iframe")
     frame.title = board().name + " simulator"
     frame.sandbox = "allow-scripts allow-same-origin"
-    frame.src = board().url
+    frame.src = board().path
     document.getElementById("board").style.setProperty("--ratio", board().ratio)
     document.getElementById("board").append(frame)
 
