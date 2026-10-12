@@ -128,3 +128,9 @@ simulators, so they need internet access.
 - [micropython-simulator](https://github.com/calliope-edu/micropython-simulator) by Calliope gGmbH, a fork of the
   micro:bit simulator (MIT)
 - [MicroPython](https://micropython.org) (MIT)
+
+---
+
+## License
+
+[MIT](LICENSE) © edrys-labs
