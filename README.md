@@ -4,6 +4,8 @@ A MicroPython simulator for [edrys-Lite](https://github.com/edrys-labs/edrys-Lit
 simulated **Calliope mini 3** or **BBC micro:bit v2** in the browser and shows the serial output (`print`,
 tracebacks) in a terminal, with no hardware required. The simulated board has working LEDs, buttons, pins and sound.
 
+![The simulator running the serial input example on a Calliope mini 3: a heart on the LEDs, the commands and answers in the terminal](screenshot.png)
+
 Import the module via:
 
 ```
