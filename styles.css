@@ -1,0 +1,159 @@
+/* water.css follows the OS colour scheme, so the terminal does too */
+:root {
+    /* white, not grey: water.css greys the inputs and buttons already */
+    --terminal-background: #fff;
+    --terminal-border: rgba(0, 0, 0, 0.2);
+    --terminal-text: #2b2b2b;
+    --terminal-error: #b8384a;
+    --terminal-scrollbar: #c8c8c8;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --terminal-background: #1a1b26;
+        --terminal-border: #1a1b26;
+        --terminal-text: #c0caf5;
+        --terminal-error: #f7768e;
+        --terminal-scrollbar: #414868;
+    }
+}
+
+/* the terminal takes the height the board leaves, so a short
+   iframe scrolls the output, not the page */
+body {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    /* edrys-Lite puts the module name over the top-right corner */
+    padding: 1rem 0.5rem 0.5rem;
+}
+
+#header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.title {
+    font-size: 1.4em;
+    line-height: 1;
+}
+
+.status {
+    font-size: small;
+}
+.status > .label {
+    opacity: 0.7;
+}
+
+.status .badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-weight: bold;
+    color: #fff;
+}
+/* dark enough for white text to clear WCAG AA */
+.status .badge.on {
+    background-color: #1f7a45;
+}
+.status .badge.off {
+    background-color: #b8384a;
+}
+.status .badge.wait {
+    background-color: #6b6b6b;
+}
+
+.controls {
+    margin-left: auto;
+    font-size: small;
+}
+.controls button {
+    margin: 0;
+    white-space: nowrap;
+}
+/* red while a program runs, so Stop doesn't read as disabled grey */
+#stop:enabled {
+    background: #b8384a;
+    color: #fff;
+}
+#stop:enabled:hover {
+    background: #9e2f3f;
+}
+
+.hint {
+    opacity: 0.7;
+}
+
+/* The simulator draws the board as wide as its frame (less its 8px body margins,
+   plus 21px of margin below), whatever the height. So the frame gets the board's
+   shape (--ratio, height / width, set by app.js) and is at most 45% of the height. */
+#board {
+    flex: 0 0 auto;
+    margin-bottom: 0.5rem;
+    --ratio: 0.9;
+    --height: min(45vh, calc((100vw - 1rem - 16px) * var(--ratio) + 21px));
+}
+#board iframe {
+    display: block;
+    width: calc((var(--height) - 21px) / var(--ratio) + 16px);
+    height: var(--height);
+    margin: 0 auto;
+    border: 0;
+}
+
+#stdout {
+    flex: 1 1 auto;
+    min-height: 6rem;
+    overflow: auto;
+    padding: 0.5rem;
+    border: 1px solid var(--terminal-border);
+    border-radius: 6px;
+    background: var(--terminal-background);
+    color: var(--terminal-text);
+    font-family: monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    scrollbar-width: thin;
+    scrollbar-color: var(--terminal-scrollbar) var(--terminal-background);
+}
+
+/* water.css styles code for the page background, not the terminal */
+#stdout code {
+    padding: 0;
+    background: none;
+    color: inherit;
+    font-weight: bold;
+}
+
+#stdout .error {
+    color: var(--terminal-error);
+}
+
+#input {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+#input input {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+}
+#input button {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}

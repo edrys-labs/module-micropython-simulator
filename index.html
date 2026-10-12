@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MicroPython Simulator</title>
+
+    <meta name="description"
+        content="A MicroPython simulator module for Edrys: runs Python programs on a simulated Calliope mini 3 or BBC micro:bit v2 and shows the serial output. It must be connected with an additional editor module, such as <a href='https://github.com/edrys-labs/module-editor' target='_blank'>module-editor</a>. Code must be sent with the subject `execute`. For more information and configuration options, see <br><br><a href='https://github.com/edrys-labs/module-micropython-simulator' target='_blank'>edrys-labs/module-micropython-simulator</a>" />
+    <meta name="show-in" content="*" />
+    <meta
+      name="module-config"
+      content="{
+        'config': {
+          'board': {
+            'type': 'select',
+            'options': ['calliope-mini-3', 'microbit-v2'],
+            'hint': 'Simulated board (default: calliope-mini-3); programs import calliopemini or microbit',
+          },
+          'execute': {
+            'type': 'text',
+            'hint': 'Message subject the simulator runs code from (default: execute)',
+          },
+          'synchronize': {
+            'type': 'boolean',
+            'hint': 'Run code sent by any peer in the room on every peer (default: false, each peer runs only its own code)',
+          },
+        },
+      }"
+    />
+
+    <script src="https://edrys-labs.github.io/module/edrys.js"></script>
+    <link rel="stylesheet" href="https://edrys-labs.github.io/module/vendor/water.min.css" />
+    <link rel="stylesheet" href="https://edrys-labs.github.io/module/vendor/open-iconic/css/open-iconic.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+</head>
+
+<body>
+    <div id="header">
+        <span class="title">MicroPython</span>
+        <span class="status">
+            <span class="label">status:</span>
+            <span id="status" class="badge wait">loading</span>
+        </span>
+        <span class="controls">
+            <button id="stop" disabled>
+                <span class="oi" data-glyph="media-stop" aria-hidden="true"></span> Stop
+            </button>
+        </span>
+    </div>
+
+    <div id="board"></div>
+
+    <div id="stdout"><span class="hint">Loading…</span><span id="line"></span></div>
+
+    <div id="input">
+        <label class="visually-hidden" for="stdin">Serial input</label>
+        <input id="stdin" type="text" placeholder="Serial input" disabled>
+        <button id="send" disabled>
+            <span class="oi" data-glyph="chevron-right" aria-hidden="true"></span> Send
+        </button>
+    </div>
+</body>
+
+</html>
