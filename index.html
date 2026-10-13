@@ -8,7 +8,7 @@
     <title>MicroPython Simulator</title>
 
     <meta name="description"
-        content="A MicroPython simulator module for Edrys: runs Python programs on a simulated Calliope mini 3 or BBC micro:bit v2 and shows the serial output. It must be connected with an additional editor module, such as <a href='https://github.com/edrys-labs/module-editor' target='_blank'>module-editor</a>. Code must be sent with the subject `execute`. For more information and configuration options, see <br><br><a href='https://github.com/edrys-labs/module-micropython-simulator' target='_blank'>edrys-labs/module-micropython-simulator</a>" />
+        content="A MicroPython simulator module for Edrys: runs Python programs on a simulated Calliope mini 3 or BBC micro:bit v2 and shows the serial output. It must be connected with an additional editor module, such as <a href='https://github.com/edrys-labs/module-monaco-editor' target='_blank'>module-monaco-editor</a>. Code must be sent with the subject `execute`. For more information and configuration options, see <br><br><a href='https://github.com/edrys-labs/module-micropython-simulator' target='_blank'>edrys-labs/module-micropython-simulator</a>" />
     <meta name="show-in" content="*" />
     <meta
       name="module-config"
@@ -22,6 +22,10 @@
           'execute': {
             'type': 'text',
             'hint': 'Message subject the simulator runs code from (default: execute)',
+          },
+          'sensors': {
+            'type': 'text',
+            'hint': 'Sensor controls below the board, e.g. temperature:0:40, lightLevel, gesture, or all (default: none)',
           },
           'synchronize': {
             'type': 'boolean',
@@ -53,6 +57,7 @@
     </div>
 
     <div id="board"></div>
+    <div id="sensors"></div>
 
     <div id="stdout"><span class="hint">Loading…</span><span id="line"></span></div>
 

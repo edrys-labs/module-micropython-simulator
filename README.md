@@ -27,6 +27,7 @@ module, so it doesn't depend on other sites. The programs run in the browser: no
 |---------------|---------|--------------------------------------------------------------------|---------------------|
 | `board`       | String  | `calliope-mini-3` or `microbit-v2`                                 | `"calliope-mini-3"` |
 | `execute`     | String  | Edrys message subject the module runs code from                    | `"execute"`         |
+| `sensors`     | String  | Sensor controls below the board, see [Sensors](#sensors)           | `""` (none)         |
 | `synchronize` | Boolean | Run code sent by any peer in the room on every peer in that room   | `false`             |
 
 Programs import the board's module: `from calliopemini import *` on the Calliope mini 3,
@@ -42,6 +43,7 @@ later or reload get it too. Stop is shared the same way: it stops every peer and
 ```yaml
 board: calliope-mini-3
 execute: execute
+sensors: temperature:0:40, lightLevel, gesture
 synchronize: false
 ```
 
@@ -71,6 +73,64 @@ synchronize: false
   serial, so `input()` reads it. MicroPython echoes what it reads.
 - **`>>>` prompt:** when the program has ended, the board starts MicroPython's prompt, and lines sent from the
   input run there (`6*7` → `42`). After an error, the board first scrolls the error over its display.
+
+### Sensors
+
+The board's buttons and pins are clicked on the board itself. For its other sensors, `sensors` adds controls
+below the board: a comma-separated list of sensors, each with an optional `:min:max` range for its slider.
+`all` adds every sensor; without `sensors` (or with `none`) there are no controls.
+
+| Sensor           | Control  | Range                          | Default | Read in Python                                  |
+|------------------|----------|--------------------------------|---------|-------------------------------------------------|
+| `temperature`    | slider   | −5 to 50 °C                    | 21      | `temperature()`                                 |
+| `lightLevel`     | slider   | 0 to 255                       | 127     | `display.read_light_level()`                    |
+| `soundLevel`     | slider   | 0 to 255                       | 0       | `microphone.sound_level()`                      |
+| `accelerometerX`, `accelerometerY`, `accelerometerZ` | slider | −2000 to 2000 mg | 0 | `accelerometer.get_x()`, …               |
+| `gesture`        | choice   | `none`, `up`, `down`, `left`, `right`, `face up`, `face down`, `freefall`, `3g`, `6g`, `8g`, `shake` | `none` | `accelerometer.was_gesture("shake")`, … |
+| `compassHeading` | slider   | 0 to 360°                      | 0       | `compass.heading()`                             |
+| `compassX`, `compassY`, `compassZ` | slider | −2,000,000 to 2,000,000 nT | 0  | `compass.get_x()`, …                            |
+
+Names are case-insensitive. A range must lie within the sensor's range (e.g. `temperature:0:40`). Entries that
+are unknown or have an invalid range are skipped with a warning in the browser console.
+
+```yaml
+sensors: temperature:0:40, lightLevel, gesture   # three controls
+sensors: all                                     # every sensor
+```
+
+The board keeps the values when a new program starts. When a program changes a range (e.g.
+`accelerometer.set_range(8)` makes it ±8000 mg), the slider follows. The values are local: each peer sets its
+own, also with `synchronize`, like pressing a button on the board.
+
+### Example: sensors
+
+With this configuration, the module shows a temperature slider (0 to 40 °C) and a light level slider below the
+board:
+
+```yaml
+board: calliope-mini-3
+sensors: temperature:0:40, lightLevel
+```
+
+The program prints both values every second and shows a face: sad above 30 °C, asleep in the dark (light level
+below 50), happy otherwise. Move the sliders to see it change (on the micro:bit, import `microbit` instead of
+`calliopemini`):
+
+```python
+from calliopemini import *
+
+while True:
+    temp = temperature()
+    light = display.read_light_level()
+    print("temperature:", temp, "light:", light)
+    if temp > 30:
+        display.show(Image.SAD)
+    elif light < 50:
+        display.show(Image.ASLEEP)
+    else:
+        display.show(Image.HAPPY)
+    sleep(1000)
+```
 
 ### Example: serial input
 

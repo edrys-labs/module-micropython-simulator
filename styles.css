@@ -106,6 +106,39 @@ body {
     border: 0;
 }
 
+/* sensor controls: two columns when there is room */
+#sensors:empty {
+    display: none;
+}
+#sensors {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    gap: 0.25rem 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.slider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+.slider > span {
+    flex: 0 0 9rem;
+}
+.slider input,
+.slider select {
+    flex: 1 1 6rem;
+    min-width: 0;
+    margin: 0;
+}
+.slider output {
+    min-width: 8ch;
+    font-family: monospace;
+    text-align: right;
+}
+
 #stdout {
     flex: 1 1 auto;
     min-height: 6rem;

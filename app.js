@@ -171,6 +171,7 @@ function onSimulator(event) {
     switch (data.kind) {
         case "ready":
             simulatorReady = true
+            createSensors(data.state || {})
             if (program) {
                 flash()
             } else {
@@ -181,6 +182,9 @@ function onSimulator(event) {
             // the board's play button, shown before the first program and after Stop
             flash()
             break
+        case "state_change":
+            updateSensors(data.change || {})
+            break
         case "serial_output":
             serial(String(data.data))
             break
@@ -189,6 +193,165 @@ function onSimulator(event) {
             setStatus("error", "off")
             break
     }
+}
+
+// ---- sensors ---------------------------------------------------------------
+//
+// Controls below the board for the board's sensors, as config.sensors lists them:
+// simulator ids with an optional range, e.g. "temperature:0:40, lightLevel, gesture",
+// or "all". The simulator describes its sensors in ready (and changes, e.g. after
+// accelerometer.set_range, in state_change): ranges as { type: "range", min, max,
+// value, unit }, choices as { type: "enum", choices, value }. The controls are
+// built from that and set values with set_value. The board keeps the values when a
+// new program starts. They are local: each peer sets its own, like pressing a button.
+
+const SENSOR_LABELS = {
+    temperature: "Temperature",
+    lightLevel: "Light level",
+    soundLevel: "Sound level",
+    accelerometerX: "Acceleration X",
+    accelerometerY: "Acceleration Y",
+    accelerometerZ: "Acceleration Z",
+    gesture: "Gesture",
+    compassHeading: "Compass heading",
+    compassX: "Magnetic field X",
+    compassY: "Magnetic field Y",
+    compassZ: "Magnetic field Z",
+}
+const SENSOR_UNITS = { deg: "°" }
+// buttons and pins are clicked on the board itself
+const ON_BOARD = /^(button[AB]|pin\w+)$/
+
+// id -> { sensor, range, input, output }; range is the one from the config, or null
+let controls = {}
+
+const isSensor = (sensor) => sensor?.type === "range" || sensor?.type === "enum"
+
+// the sensors config.sensors asks for, as Map id -> range ({ min, max } or null)
+function requestedSensors(state) {
+    const requested = new Map()
+    const spec = typeof config().sensors === "string" ? config().sensors : ""
+    const ids = Object.keys(state).filter((id) => isSensor(state[id]) && !ON_BOARD.test(id))
+
+    for (const entry of spec.split(",").map((entry) => entry.trim()).filter(Boolean)) {
+        const [name, min, max, ...rest] = entry.split(":").map((part) => part.trim())
+        if (name === "none") {
+            continue
+        }
+        if (name === "all" && min === undefined) {
+            ids.filter((id) => !requested.has(id)).forEach((id) => requested.set(id, null))
+            continue
+        }
+
+        const id = Object.keys(state).find((id) => id.toLowerCase() === name.toLowerCase())
+        const sensor = state[id]
+        if (!isSensor(sensor)) {
+            console.warn(`MicroPython: unknown sensor in sensors="${entry}" (sensors: ${ids.join(", ")})`)
+            continue
+        }
+        if (ON_BOARD.test(id)) {
+            console.warn(`MicroPython: ${id} is clicked on the board, it has no control`)
+            continue
+        }
+        if (min === undefined) {
+            requested.set(id, null)
+            continue
+        }
+
+        const range = { min: Number(min), max: Number(max) }
+        if (
+            sensor.type !== "range" || max === undefined || rest.length ||
+            isNaN(range.min) || isNaN(range.max) || range.min >= range.max ||
+            range.min < sensor.min || range.max > sensor.max
+        ) {
+            console.warn(
+                sensor.type === "range"
+                    ? `MicroPython: invalid range in sensors="${entry}" (${id}: ${sensor.min} to ${sensor.max})`
+                    : `MicroPython: ${id} has choices, no range (sensors="${entry}")`
+            )
+            continue
+        }
+        requested.set(id, range)
+    }
+    return requested
+}
+
+function createSensors(state) {
+    const parent = document.getElementById("sensors")
+    parent.replaceChildren()
+    controls = {}
+
+    for (const [id, range] of requestedSensors(state)) {
+        const control = { sensor: state[id], range }
+        const container = document.createElement("label")
+        container.className = "slider"
+        container.dataset.sensor = id
+        const label = document.createElement("span")
+        label.textContent = SENSOR_LABELS[id] || id
+
+        if (control.sensor.type === "enum") {
+            control.input = document.createElement("select")
+            for (const choice of control.sensor.choices) {
+                control.input.append(new Option(choice, choice))
+            }
+            control.input.addEventListener("change", () => post({ kind: "set_value", id, value: control.input.value }))
+            container.append(label, control.input)
+        } else {
+            control.input = document.createElement("input")
+            control.input.type = "range"
+            control.input.step = "1"
+            control.output = document.createElement("output")
+            control.input.addEventListener("input", () => {
+                showSensor(control)
+                post({ kind: "set_value", id, value: Number(control.input.value) })
+            })
+            container.append(label, control.input, control.output)
+        }
+
+        controls[id] = control
+        parent.append(container)
+        setSensor(control, control.sensor)
+    }
+}
+
+// the simulator's sensor changed: its value, or its range (accelerometer.set_range)
+function updateSensors(change) {
+    for (const [id, sensor] of Object.entries(change)) {
+        if (controls[id] && isSensor(sensor)) {
+            setSensor(controls[id], sensor)
+        }
+    }
+}
+
+function setSensor(control, sensor) {
+    control.sensor = sensor
+    if (sensor.type === "enum") {
+        control.input.value = sensor.value
+        return
+    }
+
+    // the range from the config, within what the simulator allows now
+    let min = Math.max(control.range?.min ?? sensor.min, sensor.min)
+    let max = Math.min(control.range?.max ?? sensor.max, sensor.max)
+    if (min >= max) {
+        min = sensor.min
+        max = sensor.max
+    }
+    control.input.min = String(min)
+    control.input.max = String(max)
+    control.input.value = String(sensor.value)
+    showSensor(control)
+
+    // outside of the slider's range: the board gets the nearest value the slider can show
+    const value = Math.min(max, Math.max(min, sensor.value))
+    if (value !== sensor.value) {
+        post({ kind: "set_value", id: sensor.id, value })
+    }
+}
+
+function showSensor(control) {
+    const unit = control.sensor.unit ? SENSOR_UNITS[control.sensor.unit] || " " + control.sensor.unit : ""
+    control.output.textContent = control.input.value + unit
 }
 
 // ---- terminal --------------------------------------------------------------
